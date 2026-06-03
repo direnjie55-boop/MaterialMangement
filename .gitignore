@@ -1,0 +1,19 @@
+# Build results
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# 数据库文件
+*.db
+*.db-journal
+
+# 开发环境配置
+appsettings.Development.json
+appsettings.Local.json
+
+# 日志文件
+*.log

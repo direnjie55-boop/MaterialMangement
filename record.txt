@@ -11,3 +11,9 @@ Set-Content -Path "test.json" -Value '{"name":"木材","category":"建材","spec
 
 POST 创建成功（id=4）。继续测试获取单个、更新和删除。
 curl.exe -s http://localhost:5129/api/materials/4
+
+增加物料
+Set-Content -Path "test.json" -Value '{"name":"木材","category":"建材","specification":"松木方料","unit":"立方米","quantity":30,"unitPrice":1200.00,"remark":"建筑用木材"}' -Encoding UTF8; curl.exe -s -X POST http://localhost:5129/api/materials -H "Content-Type: application/json" -d "@test.json"
+
+更新物料
+Set-Content -Path "test.json" -Value '{"name":"木材（更新）","category":"建材","specification":"松木方料-优质","unit":"立方米","quantity":50,"unitPrice":1500.00,"remark":"更新后的备注"}' -Encoding UTF8; curl.exe -s -X PUT http://localhost:5129/api/materials/4 -H "Content-Type: application/json" -d "@test.json"

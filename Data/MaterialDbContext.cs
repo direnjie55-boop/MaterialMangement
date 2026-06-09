@@ -10,10 +10,19 @@ public class MaterialDbContext : DbContext
     }
 
     public DbSet<Material> Materials => Set<Material>();
+    public DbSet<StockRecord> StockRecords => Set<StockRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        //配置StockRecord与Material的关系
+        modelBuilder.Entity<StockRecord>(entity =>
+      {
+          entity.HasOne(s => s.Material)
+                .WithMany(m => m.StockRecords)
+                .HasForeignKey(s => s.MaterialId)
+                .OnDelete(DeleteBehavior.Cascade);
+      });
 
         // 种子数据
         modelBuilder.Entity<Material>().HasData(

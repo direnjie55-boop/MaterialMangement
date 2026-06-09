@@ -28,4 +28,8 @@ public class Material
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     public DateTime? UpdatedAt { get; set; }
+    /// <summary>
+    /// 库存变动记录
+    /// </summary>
+    public List<StockRecord> StockRecords { get; set; } = new();
 }

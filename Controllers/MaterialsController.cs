@@ -4,7 +4,7 @@ using MaterialMangement.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace MaterialManagement.Controllers;
+namespace MaterialMangement.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

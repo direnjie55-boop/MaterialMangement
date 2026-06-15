@@ -22,6 +22,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
 //注册缓服务
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
+//注册 RabbitMQ 消息服务
+builder.Services.AddSingleton<IMessageService, RabbitMqService>();
+
 //配置JWT认证
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSection["key"]!);

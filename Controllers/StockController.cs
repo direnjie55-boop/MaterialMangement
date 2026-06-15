@@ -15,10 +15,13 @@ public class StockController : ControllerBase
 {
     private readonly MaterialDbContext _context;
     private readonly ICacheService _cache;
-    public StockController(MaterialDbContext context, ICacheService cache)
+    private readonly IMessageService _messageService;
+
+    public StockController(MaterialDbContext context, ICacheService cache, IMessageService messageService)
     {
         _context = context;
         _cache = cache;
+        _messageService = messageService;
     }
 
     /// <summary>
@@ -122,6 +125,19 @@ public class StockController : ControllerBase
         await _cache.RemoveAsync("materials:all");
         await _cache.RemoveAsync($"materials:{dto.MaterialId}");
 
+        // 发布入库消息到 RabbitMQ
+        await _messageService.PublishStockOperationAsync(new StockOperationMessage
+        {
+            MaterialId = material.Id,
+            MaterialName = material.Name,
+            Operation = "Inbound",
+            Quantity = dto.Quantity,
+            BeforeQuantity = beforeQty,
+            AfterQuantity = material.Quantity,
+            Operator = dto.Operator,
+            Reason = dto.Reason
+        });
+
         var result = new StockRecordDto
         {
             Id = record.Id,
@@ -188,6 +204,19 @@ public class StockController : ControllerBase
         await _cache.RemoveAsync($"stock:{dto.MaterialId}");
         await _cache.RemoveAsync("materials:all");
         await _cache.RemoveAsync($"materials:{dto.MaterialId}");
+
+        // 发布出库消息到 RabbitMQ
+        await _messageService.PublishStockOperationAsync(new StockOperationMessage
+        {
+            MaterialId = material.Id,
+            MaterialName = material.Name,
+            Operation = "Outbound",
+            Quantity = dto.Quantity,
+            BeforeQuantity = beforeQty,
+            AfterQuantity = material.Quantity,
+            Operator = dto.Operator,
+            Reason = dto.Reason
+        });
 
         var result = new StockRecordDto
         {

@@ -3,6 +3,7 @@ using System;
 using MaterialMangement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MaterialMangement.Migrations
 {
     [DbContext(typeof(MaterialDbContext))]
-    partial class MaterialDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615090131_AddUserAndAuth")]
+    partial class AddUserAndAuth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.8");

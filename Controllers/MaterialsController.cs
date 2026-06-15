@@ -1,6 +1,9 @@
 using MaterialMangement.Data;
 using MaterialMangement.DTOs;
 using MaterialMangement.Models;
+using MaterialMangement.Services;
+using Microsoft.AspNetCore.Authorization;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,13 +11,15 @@ namespace MaterialMangement.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class MaterialsController : ControllerBase
 {
     private readonly MaterialDbContext _context;
-
-    public MaterialsController(MaterialDbContext context)
+    private readonly ICacheService _cache;
+    public MaterialsController(MaterialDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     /// <summary>
@@ -23,9 +28,15 @@ public class MaterialsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Material>>> GetAll()
     {
+        var cacheKey = "materials:all";
+        var cached = await _cache.GetAsync<List<Material>>(cacheKey);
+        if (cached != null) return Ok(cached);
+
         var materials = await _context.Materials
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync();
+
+        await _cache.SetAsync(cacheKey, materials, TimeSpan.FromMinutes(5));
         return Ok(materials);
     }
 
@@ -35,11 +46,16 @@ public class MaterialsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Material>> GetById(int id)
     {
+        var cacheKey = $"materials:{id}";
+        var cached = await _cache.GetAsync<Material>(cacheKey);
+        if (cached != null) return Ok(cached);
+
         var material = await _context.Materials.FindAsync(id);
         if (material == null)
         {
             return NotFound(new { message = $"未找到ID为 {id} 的物料" });
         }
+        await _cache.SetAsync(cacheKey, material, TimeSpan.FromMinutes(5));
         return Ok(material);
     }
 
@@ -87,6 +103,9 @@ public class MaterialsController : ControllerBase
         _context.Materials.Add(material);
         await _context.SaveChangesAsync();
 
+        //清除缓存列表
+        await _cache.RemoveAsync("materials:all");
+
         return CreatedAtAction(nameof(GetById), new { id = material.Id }, material);
     }
 
@@ -113,6 +132,10 @@ public class MaterialsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        //清除相关缓存
+        await _cache.RemoveAsync("materials:all");
+        await _cache.RemoveAsync($"materials:{id}");
+
         return Ok(material);
     }
 
@@ -130,6 +153,10 @@ public class MaterialsController : ControllerBase
 
         _context.Materials.Remove(material);
         await _context.SaveChangesAsync();
+
+        // 清除相关缓存
+        await _cache.RemoveAsync("materials:all");
+        await _cache.RemoveAsync($"materials:{id}");
 
         return NoContent();
     }

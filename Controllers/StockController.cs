@@ -1,20 +1,24 @@
 using MaterialMangement.Data;
 using MaterialMangement.DTOs;
 using MaterialMangement.Models;
+using MaterialMangement.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaterialMangement.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class StockController : ControllerBase
 {
     private readonly MaterialDbContext _context;
-
-    public StockController(MaterialDbContext context)
+    private readonly ICacheService _cache;
+    public StockController(MaterialDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     /// <summary>
@@ -23,6 +27,10 @@ public class StockController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<StockInfoDto>>> GetAllStock()
     {
+        var cacheKey = "stock:all";
+        var cached = await _cache.GetAsync<List<StockInfoDto>>(cacheKey);
+        if (cached != null) return Ok(cached);
+
         var stocks = await _context.Materials
             .OrderBy(m => m.Name)
             .Select(m => new StockInfoDto
@@ -36,7 +44,7 @@ public class StockController : ControllerBase
                 UnitPrice = m.UnitPrice
             })
             .ToListAsync();
-
+        await _cache.SetAsync(cacheKey, stocks, TimeSpan.FromMinutes(5));
         return Ok(stocks);
     }
 
@@ -108,6 +116,12 @@ public class StockController : ControllerBase
         _context.StockRecords.Add(record);
         await _context.SaveChangesAsync();
 
+        // 清除库存缓存
+        await _cache.RemoveAsync("stock:all");
+        await _cache.RemoveAsync($"stock:{dto.MaterialId}");
+        await _cache.RemoveAsync("materials:all");
+        await _cache.RemoveAsync($"materials:{dto.MaterialId}");
+
         var result = new StockRecordDto
         {
             Id = record.Id,
@@ -168,6 +182,12 @@ public class StockController : ControllerBase
 
         _context.StockRecords.Add(record);
         await _context.SaveChangesAsync();
+
+        // 清除库存缓存
+        await _cache.RemoveAsync("stock:all");
+        await _cache.RemoveAsync($"stock:{dto.MaterialId}");
+        await _cache.RemoveAsync("materials:all");
+        await _cache.RemoveAsync($"materials:{dto.MaterialId}");
 
         var result = new StockRecordDto
         {

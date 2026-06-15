@@ -11,7 +11,7 @@ public class MaterialDbContext : DbContext
 
     public DbSet<Material> Materials => Set<Material>();
     public DbSet<StockRecord> StockRecords => Set<StockRecord>();
-
+    public DbSet<User> Users => Set<User>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
